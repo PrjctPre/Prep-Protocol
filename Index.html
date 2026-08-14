@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prep Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --radius: 10px;
+    --bg: #12151a;
+    --surface: #1c2128;
+    --surface-2: #22282f;
+    --accent: #00d4ff;
+    --accent-2: #0ea5a5;
+    --text: #e8ecf1;
+    --muted: #7a8699;
+    --border: #2a3038;
+    --success: #22c55e;
+    --warn: #f59e0b;
+    --display-font: 'JetBrains Mono', monospace;
+    --body-font: 'Space Grotesk', sans-serif;
+    --data-font: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--body-font); padding: 0 0 80px 0; }
+
+  .switcher-wrap { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border); padding: 14px 20px; }
+  .switcher { display: flex; gap: 8px; max-width: 640px; margin: 0 auto; }
+  .switcher button { flex: 1; padding: 10px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-family: var(--data-font); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: all .2s ease; }
+  .switcher button.active { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+  .page { max-width: 640px; margin: 0 auto; padding: 32px 20px 0; }
+  .header { margin-bottom: 28px; }
+  .eyebrow { font-family: var(--data-font); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h1 { font-family: var(--display-font); font-size: 34px; font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; }
+  .subhead { color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+  .progress-row { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+  .progress-track { flex: 1; height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width .4s ease; }
+  .progress-label { font-family: var(--data-font); font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  .timeline { position: relative; margin-top: 32px; padding-left: 28px; }
+  .rail { position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
+  .block { position: relative; margin-bottom: 10px; }
+  .dot { position: absolute; left: -28px; top: 18px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 2px solid var(--border); transition: all .25s ease; }
+  .block.all-checked .dot { border-color: var(--success); background: var(--success); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .card-head { padding: 14px 16px 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .time { font-family: var(--data-font); font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
+  .block-title { font-family: var(--display-font); font-size: 17px; font-weight: 600; }
+
+  .items { border-top: 1px solid var(--border); }
+  .item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: background .15s ease; }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: var(--surface-2); }
+  .checkbox { flex-shrink: 0; width: 19px; height: 19px; border-radius: 5px; border: 2px solid var(--border); margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all .18s ease; }
+  .item.checked .checkbox { background: var(--success); border-color: var(--success); }
+  .checkbox svg { width: 12px; height: 12px; opacity: 0; transform: scale(.5); transition: all .18s ease; color: #0a0a0a; }
+  .item.checked .checkbox svg { opacity: 1; transform: scale(1); }
+  .item-text { flex: 1; }
+  .item-title { font-size: 14.5px; font-weight: 500; transition: color .18s ease, opacity .18s ease; }
+  .item.checked .item-title { color: var(--muted); opacity: .7; text-decoration: line-through; text-decoration-color: var(--muted); }
+  .item-tag { display: inline-block; font-family: var(--data-font); font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; margin-top: 6px; background: var(--surface-2); color: var(--accent-2); border: 1px solid var(--border); }
+  .item-tag.macro { color: var(--warn); }
+  .item-note { font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  .totals { margin-top: 28px; padding: 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); font-family: var(--data-font); font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .totals b { color: var(--text); }
+
+  .reset-btn {
+    margin-top: 16px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--data-font);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .reset-btn:hover { color: var(--text); border-color: var(--accent); }
+  .reset-btn svg { width: 13px; height: 13px; }
+
+  .celebration-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(18, 21, 26, 0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+  }
+  .celebration-overlay.show { opacity: 1; pointer-events: auto; }
+
+  .celebration-card {
+    text-align: center;
+    padding: 32px;
+    transform: scale(.9);
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .celebration-overlay.show .celebration-card { transform: scale(1); }
+
+  .celebration-check {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .celebration-check svg { width: 34px; height: 34px; color: var(--bg); }
+
+  .celebration-title {
+    font-family: var(--display-font);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .celebration-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+
+  .celebration-dismiss {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-family: var(--data-font);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .confetti-piece {
+    position: fixed;
+    top: -20px;
+    width: 8px;
+    height: 8px;
+    z-index: 99;
+    opacity: 0.9;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    to { transform: translateY(110vh) rotate(540deg); opacity: 0; }
+  }
+
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .reset-btn { margin-top: 0 !important; }
+  .edit-btn {
+    padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted); font-family: var(--data-font);
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+    transition: all .18s ease; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .edit-btn:hover { color: var(--text); border-color: var(--warn); }
+  .edit-btn.active { background: var(--warn); border-color: var(--warn); color: var(--bg); font-weight: 600; }
+  .edit-btn svg { width: 13px; height: 13px; }
+
+  body.editing .item { cursor: default; }
+  body.editing .checkbox { opacity: .3; pointer-events: none; }
+  .amt {
+    display: inline-block; min-width: 34px; padding: 1px 6px; border-radius: 4px;
+    font-family: var(--data-font); font-weight: 600; color: var(--warn);
+  }
+  body.editing .amt {
+    background: var(--surface-2); border: 1px dashed var(--warn);
+    outline: none; cursor: text;
+  }
+  body.editing .amt:focus { border-style: solid; background: var(--bg); }
+  .edit-hint {
+    display: none; margin-top: 12px; padding: 11px 14px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--warn);
+    font-size: 12.5px; color: var(--muted); line-height: 1.5;
+  }
+  body.editing .edit-hint { display: block; }
+
+
+  .supp-panel {
+    margin-top: 14px; padding: 14px 16px; border-radius: var(--radius);
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .supp-head {
+    font-family: var(--data-font); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  }
+  .supp-head .count { color: var(--accent); font-weight: 600; }
+  .supp-list { display: flex; flex-direction: column; gap: 7px; }
+  .supp-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 10px; font-size: 13.5px;
+  }
+  .supp-name { color: var(--text); }
+  .supp-time { font-family: var(--data-font); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .supp-row.overdue .supp-name { color: var(--warn); }
+  .supp-row.overdue .supp-time { color: var(--warn); }
+  .supp-empty { font-size: 13px; color: var(--success); }
+  .supp-note { margin-top: 10px; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+
+
+  .flex-banner { margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .flex-banner b { color: var(--warn); }
+  .switcher button { padding: 9px 4px !important; font-size: 10px !important; letter-spacing: 0.03em !important; }
+
+
+  .backup-btn {
+    padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted); font-family: var(--data-font);
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+    transition: all .18s ease; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .backup-btn:hover { color: var(--text); border-color: var(--success); }
+  .backup-btn.dirty { border-color: var(--warn); color: var(--warn); }
+  .backup-btn svg { width: 13px; height: 13px; }
+
+  .backup-panel {
+    display: none; margin-top: 12px; padding: 14px;
+    border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border);
+  }
+  .backup-panel.open { display: block; }
+  .backup-panel h4 {
+    font-family: var(--data-font); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); font-weight: 400; margin-bottom: 8px;
+  }
+  .backup-panel textarea {
+    width: 100%; min-height: 74px; background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    font-family: var(--data-font); font-size: 11px; resize: vertical;
+    -webkit-user-select: text; user-select: text;
+  }
+  .backup-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .backup-actions button {
+    flex: 1; min-width: 110px; padding: 9px; border-radius: 8px; cursor: pointer;
+    font-family: var(--data-font); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+    border: 1px solid var(--accent); background: transparent; color: var(--accent);
+  }
+  .backup-actions button.primary { background: var(--accent); color: var(--bg); font-weight: 600; }
+  .backup-msg { margin-top: 9px; font-size: 12px; color: var(--success); min-height: 16px; }
+  .backup-help { margin-top: 9px; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+
+
+  .card-head { position: relative; }
+  .head-left { display: flex; flex-direction: column; gap: 2px; }
+  .section-toggle {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 9px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--muted); font-family: var(--data-font); font-size: 9.5px;
+    letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+    transition: all .16s ease; user-select: none;
+  }
+  .section-toggle:hover { color: var(--text); border-color: var(--accent); }
+  .section-toggle svg { width: 11px; height: 11px; }
+  .block.all-checked .section-toggle {
+    color: var(--success); border-color: var(--success); background: transparent;
+  }
+  .head-right { display: flex; align-items: center; gap: 9px; }
+  body.editing .section-toggle { opacity: .3; pointer-events: none; }
+
+  .sticky-progress { max-width: 640px; margin: 10px auto 0; display: flex; align-items: center; gap: 10px; }
+  .sticky-track {
+    flex: 1; height: 5px; border-radius: 3px; background: var(--surface-2);
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .sticky-fill {
+    height: 100%; width: 0%; background: var(--accent);
+    transition: width .35s ease, background-color .35s ease;
+  }
+  .sticky-fill.complete { background: var(--success); }
+  .sticky-label {
+    font-family: var(--data-font); font-size: 11px; color: var(--muted);
+    white-space: nowrap; min-width: 62px; text-align: right;
+  }
+  .sticky-label.complete { color: var(--success); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } .confetti-piece { animation: none; display: none; } }
+</style>
+</head>
+<body>
+
+  <div class="switcher-wrap">
+    <div class="switcher">
+      <button data-view-btn="wd-train" class="active">Wk Train</button>
+      <button data-view-btn="wd-rest">Wk Rest</button>
+      <button data-view-btn="we-train">Wknd Train</button>
+      <button data-view-btn="we-rest">Wknd Rest</button>
+    </div>
+    <div class="sticky-progress">
+      <div class="sticky-track"><div class="sticky-fill" id="stickyFill"></div></div>
+      <div class="sticky-label" id="stickyLabel">0 / 0</div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="header">
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 id="pageTitle">Training Day</h1>
+      <div class="subhead" id="pageSub">Meals, training, and supplements — one sequence.</div>
+      <div class="flex-banner" id="flexBanner" style="display:none;">Training window varies (as early as 11 AM, as late as 7 PM). Meal timing below assumes a mid-afternoon session — <b>shift the post-training meal to right after you finish lifting</b>, whatever time that lands.</div>
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">0 / 0</div>
+      </div>
+      <div class="btn-row">
+      <button class="reset-btn" id="resetBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+        Reset for new day
+      </button>
+      <button class="edit-btn" id="editBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+        Edit amounts
+      </button>
+      <button class="backup-btn" id="backupBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Backup
+      </button>
+      </div>
+    <div class="backup-panel" id="backupPanel">
+      <h4>Backup code</h4>
+      <textarea id="backupBox" readonly></textarea>
+      <div class="backup-actions">
+        <button class="primary" id="copyBackup">Copy code</button>
+        <button id="restoreBackup">Restore from code</button>
+      </div>
+      <div class="backup-msg" id="backupMsg"></div>
+      <div class="backup-help">iOS clears browser storage aggressively. Copy this code into a note once a day (or after Monday edits). If your data vanishes, paste it back here and tap Restore.</div>
+    </div>
+      <div class="edit-hint">Tap any highlighted number to change it. Amounts save automatically and persist across days — update these each Monday when your coach adjusts macros. Tap <b>Done editing</b> when finished.</div>
+    </div>
+    <div class="timeline" id="timeline"></div>
+    <div class="totals">
+      <div>Total: <b id="tCal">2,019 cal</b></div>
+      <div>Protein: <b id="tP">248g</b></div>
+      <div>Fats: <b id="tF">72g</b></div>
+      <div>Carbs: <b id="tC">80g</b></div>
+    </div>
+
+    <div class="supp-panel">
+      <div class="supp-head">
+        <span>Supplements remaining</span>
+        <span class="count" id="suppCount"></span>
+      </div>
+      <div class="supp-list" id="suppList"></div>
+      <div class="supp-note" id="suppNote"></div>
+    </div>
+  </div>
+
+  <div class="celebration-overlay" id="celebrationOverlay">
+    <div class="celebration-card">
+      <div class="celebration-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <div class="celebration-title">Protocol Complete</div>
+      <div class="celebration-sub">Every meal, every dose, on time.</div>
+      <button class="celebration-dismiss" id="celebrationDismiss">Close</button>
+    </div>
+  </div>
+
+<script>
+const WD_TRAIN = [
+  { time: "7:00 AM", title: "Wake up", items: [ { title: "Wake up" } ] },
+  { time: "7:30 – 8:15 AM", title: "Cardio (Crunch)", items: [
+      { title: "Morning cardio session" },
+      { title: "EAAs", tag: "Supplement", note: "Fasted-state muscle sparing during cardio." }
+  ]},
+  { time: "8:30 – 9:00 AM", title: "Get ready", items: [ { title: "Get ready for work" } ] },
+  { time: "9:00 AM", title: "Work starts", items: [ { title: "Start work" } ] },
+  { time: "9:30 AM", title: "Meal 1", items: [
+      { title: "250g non-fat Greek yogurt", tag: "250g", tagClass: "macro" },
+      { title: "1 scoop protein (≤120 cal)", tag: "Meal", tagClass: "macro" },
+      { title: "100g blueberries (fresh or frozen)", tag: "100g", tagClass: "macro" },
+      { title: "16g almond butter (natural/organic)", tag: "16g", tagClass: "macro" },
+      { title: "HMB — 2g", tag: "Supplement", note: "Split dose, first of two." },
+      { title: "NMN powder", tag: "Supplement", note: "Morning dose, on/near empty stomach." },
+      { title: "Vitamin B-complex", tag: "Supplement", note: "Morning — avoids evening energy spike." },
+      { title: "Omega-3 (fish oil)", tag: "Supplement", note: "With almond butter fat for absorption." }
+  ]},
+  { time: "12:30 PM", title: "Meal 2", items: [
+      { title: "180g chicken breast or 99/1 ground turkey (dry)", tag: "180g", tagClass: "macro" },
+      { title: "40g avocado (fresh & pitted)", tag: "40g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" },
+      { title: "Vitamin D3/K2", tag: "Supplement", note: "Fat-soluble — take with food." },
+      { title: "Vitamin E", tag: "Supplement", note: "Fat-soluble — pairs with D3/K2." },
+      { title: "Calcium", tag: "Supplement", note: "Paired with D3 — kept away from evening magnesium." },
+      { title: "Vitamin C", tag: "Supplement", note: "Spaced ~5hrs before training to avoid dulling adaptation." },
+      { title: "NAC", tag: "Supplement", note: "Same timing logic as Vitamin C." }
+  ]},
+  { time: "3:00 PM", title: "Meal 3", items: [
+      { title: "180g 93/7 ground turkey or salmon (cooked)", tag: "180g", tagClass: "macro" },
+      { title: "5g extra virgin olive oil (dark glass bottle)", tag: "5g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" },
+      { title: "Caffeine — 200mg", tag: "Supplement", note: "Anchor time — keeps clearance on track for 11:30 PM bed." },
+      { title: "Creatine HCL — 4g", tag: "Supplement" }
+  ]},
+  { time: "4:30 PM", title: "Meal 4 (Pre-workout)", items: [
+      { title: "50g cream of rice (weigh dry)", tag: "50g", tagClass: "macro" },
+      { title: "1 scoop protein (≤120 cal)", tag: "Meal", tagClass: "macro" },
+      { title: "16g almond butter (natural/organic)", tag: "16g", tagClass: "macro" },
+      { title: "100g blueberries (fresh or frozen)", tag: "100g", tagClass: "macro" },
+      { title: "HMB — 2g", tag: "Supplement", note: "Second dose, ahead of training." }
+  ]},
+  { time: "5:00 – 5:30 PM", title: "Gym prep", items: [ { title: "Gym prep" } ] },
+  { time: "5:45 – 7:30 PM", title: "Gym — Training", items: [
+      { title: "Training session" },
+      { title: "Intra-workout EAAs", tag: "Supplement" }
+  ]},
+  { time: "8:00 PM", title: "Home", items: [ { title: "Home by 8" } ] },
+  { time: "8:30 – 9:00 PM", title: "Meal 5 (Final meal)", items: [
+      { title: "180g chicken breast or 99/1 ground turkey (dry)", tag: "180g", tagClass: "macro" },
+      { title: "40g avocado (fresh & pitted)", tag: "40g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" }
+  ]},
+  { time: "8:45 – 9:00 PM", title: "Evening stack", items: [
+      { title: "Magnesium glycinate — 350mg", tag: "Supplement" },
+      { title: "L-theanine — 200mg", tag: "Supplement", note: "Before wind-down block — smooths lingering caffeine." }
+  ]},
+  { time: "9:00 – 10:00 PM", title: "Read / journal / meditate", items: [
+      { title: "Read / journal / meditate" },
+      { title: "Stretch" }
+  ]},
+  { time: "All day", title: "Daily step goal", items: [
+      { title: "11000 steps minimum", tag: "Target", tagClass: "macro", note: "Non-negotiable — editable weekly like your macros." }
+  ]},
+  { time: "11:30 PM", title: "In bed", items: [ { title: "In bed" } ] }
+];
+
+const WD_REST = [
+  { time: "7:00 AM", title: "Wake up", items: [ { title: "Wake up" } ] },
+  { time: "7:30 – 8:15 AM", title: "Cardio (Crunch)", items: [
+      { title: "Morning cardio session" },
+      { title: "EAAs", tag: "Supplement", note: "Fasted-state muscle sparing during cardio." }
+  ]},
+  { time: "8:30 – 9:00 AM", title: "Get ready", items: [ { title: "Get ready for work" } ] },
+  { time: "9:00 AM", title: "Work starts", items: [ { title: "Start work" } ] },
+  { time: "9:30 AM", title: "Meal 1", items: [
+      { title: "250g non-fat Greek yogurt", tag: "250g", tagClass: "macro" },
+      { title: "1 scoop protein (≤120 cal)", tag: "Meal", tagClass: "macro" },
+      { title: "100g blueberries (fresh or frozen)", tag: "100g", tagClass: "macro" },
+      { title: "16g almond butter (natural/organic)", tag: "16g", tagClass: "macro" },
+      { title: "HMB — 2g", tag: "Supplement", note: "Split dose, first of two." },
+      { title: "NMN powder", tag: "Supplement", note: "Morning dose, on/near empty stomach." },
+      { title: "Vitamin B-complex", tag: "Supplement", note: "Morning — avoids evening energy spike." },
+      { title: "Omega-3 (fish oil)", tag: "Supplement", note: "With almond butter fat for absorption." }
+  ]},
+  { time: "12:30 PM", title: "Meal 2", items: [
+      { title: "180g chicken breast or 99/1 ground turkey (dry)", tag: "180g", tagClass: "macro" },
+      { title: "40g avocado (fresh & pitted)", tag: "40g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" },
+      { title: "Vitamin D3/K2", tag: "Supplement", note: "Fat-soluble — take with food." },
+      { title: "Vitamin E", tag: "Supplement", note: "Fat-soluble — pairs with D3/K2." },
+      { title: "Calcium", tag: "Supplement", note: "Paired with D3 — kept away from evening magnesium." },
+      { title: "Vitamin C", tag: "Supplement" },
+      { title: "NAC", tag: "Supplement" }
+  ]},
+  { time: "3:00 PM", title: "Meal 3", items: [
+      { title: "180g 93/7 ground turkey or salmon (cooked)", tag: "180g", tagClass: "macro" },
+      { title: "5g extra virgin olive oil (dark glass bottle)", tag: "5g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" },
+      { title: "Creatine HCL — 4g", tag: "Supplement", note: "Taken daily regardless of training for saturation." },
+      { title: "Caffeine — skipped", tag: "Note", note: "Rest day — no training demand, protects recovery/sleep." }
+  ]},
+  { time: "4:30 PM", title: "Meal 4", items: [
+      { title: "50g cream of rice (weigh dry)", tag: "50g", tagClass: "macro" },
+      { title: "1 scoop protein (≤120 cal)", tag: "Meal", tagClass: "macro" },
+      { title: "16g almond butter (natural/organic)", tag: "16g", tagClass: "macro" },
+      { title: "100g blueberries (fresh or frozen)", tag: "100g", tagClass: "macro" },
+      { title: "HMB — 2g", tag: "Supplement", note: "Kept daily — deficit-driven, not training-driven." }
+  ]},
+  { time: "5:00 – 6:00 PM", title: "Recovery / mobility", items: [
+      { title: "Light walk, mobility, or full rest — no lifting" }
+  ]},
+  { time: "7:00 PM", title: "Home / wind down begins", items: [ { title: "Free evening" } ] },
+  { time: "7:30 – 8:00 PM", title: "Meal 5 (Final meal)", items: [
+      { title: "180g chicken breast or 99/1 ground turkey (dry)", tag: "180g", tagClass: "macro" },
+      { title: "40g avocado (fresh & pitted)", tag: "40g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" }
+  ]},
+  { time: "8:15 – 8:30 PM", title: "Evening stack", items: [
+      { title: "Magnesium glycinate — 350mg", tag: "Supplement" },
+      { title: "L-theanine — 200mg", tag: "Supplement" }
+  ]},
+  { time: "8:30 – 10:00 PM", title: "Read / journal / meditate", items: [
+      { title: "Read / journal / meditate" },
+      { title: "Stretch" }
+  ]},
+  { time: "All day", title: "Daily step goal", items: [
+      { title: "11000 steps minimum", tag: "Target", tagClass: "macro", note: "Non-negotiable — editable weekly like your macros." }
+  ]},
+  { time: "11:30 PM", title: "In bed", items: [ { title: "In bed" } ] }
+];
+
+const WE_TRAIN = [
+  { time: "8:00 – 9:00 AM", title: "Wake up + Meal 1", flexible: false, items: [
+      { title: "Wake up" },
+      { title: "50g cream of rice (weigh dry)", tag: "50g", tagClass: "macro" },
+      { title: "1 scoop protein (≤120 cal)", tag: "Meal", tagClass: "macro" },
+      { title: "100g blueberries (fresh or frozen)", tag: "100g", tagClass: "macro" },
+      { title: "80g banana (fresh or frozen)", tag: "80g", tagClass: "macro" },
+      { title: "HMB — 2g", tag: "Supplement", note: "Split dose, first of two." },
+      { title: "NMN powder", tag: "Supplement" },
+      { title: "Vitamin B-complex", tag: "Supplement" },
+      { title: "Omega-3 (fish oil)", tag: "Supplement" }
+  ]},
+  { time: "10:00 – 11:00 AM", title: "Meal 2", items: [
+      { title: "140g chicken breast or 99/1 ground turkey (dry)", tag: "140g", tagClass: "macro" },
+      { title: "180g jasmine rice (weigh cooked)", tag: "180g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" },
+      { title: "Vitamin D3/K2", tag: "Supplement" },
+      { title: "Vitamin E", tag: "Supplement" },
+      { title: "Calcium", tag: "Supplement", note: "Kept away from evening magnesium dose." },
+      { title: "Vitamin C", tag: "Supplement" },
+      { title: "NAC", tag: "Supplement" }
+  ]},
+  { time: "1:00 – 2:00 PM", title: "Pre-gym meal", flexible: true, items: [
+      { title: "50g cream of rice (weigh dry)", tag: "50g", tagClass: "macro" },
+      { title: "1 scoop protein (≤120 cal)", tag: "Meal", tagClass: "macro" },
+      { title: "20g almond butter (natural/organic)", tag: "20g", tagClass: "macro" },
+      { title: "100g blueberries (fresh or frozen)", tag: "100g", tagClass: "macro" },
+      { title: "Caffeine — 250mg", tag: "Supplement", note: "Take 60–90 min before whenever training actually starts (11 AM–7 PM window)." },
+      { title: "Creatine HCL — 4g", tag: "Supplement" },
+      { title: "HMB — 2g", tag: "Supplement", note: "Second dose, ahead of training." }
+  ]},
+  { time: "11 AM – 7 PM (varies)", title: "Training", flexible: true, items: [
+      { title: "Training session" },
+      { title: "Intra-workout EAAs", tag: "Supplement" }
+  ]},
+  { time: "4:00 PM (adjust)", title: "Post-training meal", flexible: true, items: [
+      { title: "140g 93/7 ground turkey or salmon (cooked)", tag: "140g", tagClass: "macro" },
+      { title: "180g jasmine rice (weigh cooked)", tag: "180g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" }
+  ]},
+  { time: "8:00 PM", title: "Meal 5", items: [
+      { title: "140g chicken breast or 99/1 ground turkey (dry)", tag: "140g", tagClass: "macro" },
+      { title: "180g jasmine rice (weigh cooked)", tag: "180g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" }
+  ]},
+  { time: "~2 hrs before bed", title: "Evening stack", flexible: true, items: [
+      { title: "Magnesium glycinate — 350mg", tag: "Supplement" },
+      { title: "L-theanine — 200mg", tag: "Supplement" }
+  ]},
+  { time: "All day", title: "Daily step goal", items: [
+      { title: "11000 steps minimum", tag: "Target", tagClass: "macro", note: "Non-negotiable — editable weekly like your macros." }
+  ]},
+  { time: "Wind down", title: "Read / stretch / bed", flexible: true, items: [
+      { title: "Read / journal / meditate" },
+      { title: "Stretch" },
+      { title: "In bed" }
+  ]}
+];
+
+const WE_REST = [
+  { time: "8:00 – 9:00 AM", title: "Wake up + Meal 1", items: [
+      { title: "Wake up" },
+      { title: "50g cream of rice (weigh dry)", tag: "50g", tagClass: "macro" },
+      { title: "1 scoop protein (≤120 cal)", tag: "Meal", tagClass: "macro" },
+      { title: "100g blueberries (fresh or frozen)", tag: "100g", tagClass: "macro" },
+      { title: "80g banana (fresh or frozen)", tag: "80g", tagClass: "macro" },
+      { title: "HMB — 2g", tag: "Supplement", note: "Kept daily — deficit-driven, not training-driven." },
+      { title: "NMN powder", tag: "Supplement" },
+      { title: "Vitamin B-complex", tag: "Supplement" },
+      { title: "Omega-3 (fish oil)", tag: "Supplement" }
+  ]},
+  { time: "10:00 – 11:00 AM", title: "Meal 2", items: [
+      { title: "140g chicken breast or 99/1 ground turkey (dry)", tag: "140g", tagClass: "macro" },
+      { title: "180g jasmine rice (weigh cooked)", tag: "180g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" },
+      { title: "Vitamin D3/K2", tag: "Supplement" },
+      { title: "Vitamin E", tag: "Supplement" },
+      { title: "Calcium", tag: "Supplement" },
+      { title: "Vitamin C", tag: "Supplement" },
+      { title: "NAC", tag: "Supplement" }
+  ]},
+  { time: "1:00 – 2:00 PM", title: "Meal 3", items: [
+      { title: "50g cream of rice (weigh dry)", tag: "50g", tagClass: "macro" },
+      { title: "1 scoop protein (≤120 cal)", tag: "Meal", tagClass: "macro" },
+      { title: "20g almond butter (natural/organic)", tag: "20g", tagClass: "macro" },
+      { title: "100g blueberries (fresh or frozen)", tag: "100g", tagClass: "macro" },
+      { title: "Creatine HCL — 4g", tag: "Supplement", note: "Taken daily regardless of training for saturation." },
+      { title: "Caffeine — skipped", tag: "Note", note: "Rest day — no training demand, protects recovery." }
+  ]},
+  { time: "4:00 PM", title: "Meal 4", items: [
+      { title: "140g 93/7 ground turkey or salmon (cooked)", tag: "140g", tagClass: "macro" },
+      { title: "180g jasmine rice (weigh cooked)", tag: "180g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" }
+  ]},
+  { time: "8:00 PM", title: "Meal 5", items: [
+      { title: "140g chicken breast or 99/1 ground turkey (dry)", tag: "140g", tagClass: "macro" },
+      { title: "180g jasmine rice (weigh cooked)", tag: "180g", tagClass: "macro" },
+      { title: "80g veggie of choice", tag: "80g", tagClass: "macro" }
+  ]},
+  { time: "~2 hrs before bed", title: "Evening stack", items: [
+      { title: "Magnesium glycinate — 350mg", tag: "Supplement" },
+      { title: "L-theanine — 200mg", tag: "Supplement" }
+  ]},
+  { time: "All day", title: "Daily step goal", items: [
+      { title: "11000 steps minimum", tag: "Target", tagClass: "macro", note: "Non-negotiable — editable weekly like your macros." }
+  ]},
+  { time: "Wind down", title: "Read / stretch / bed", items: [
+      { title: "Read / journal / meditate" },
+      { title: "Stretch" },
+      { title: "In bed" }
+  ]}
+];
+
+const VIEWS = {
+  "wd-train": { data: WD_TRAIN, title: "Weekday · Training Day", suffix: "Weekday (Mon\u2013Fri) \u00b7 Low Day macros",  totals: { cal: "2,019", p: "248g", f: "72g", c: "80g" }, flex: false },
+  "wd-rest":  { data: WD_REST,  title: "Weekday · Rest Day",     suffix: "Weekday (Mon\u2013Fri) \u00b7 Low Day macros",  totals: { cal: "2,019", p: "248g", f: "72g", c: "80g" }, flex: false },
+  "we-train": { data: WE_TRAIN, title: "Weekend · Training Day", suffix: "Weekend (Sat\u2013Sun) \u00b7 High Day macros", totals: { cal: "2,388", p: "201g", f: "45g", c: "276g" }, flex: true },
+  "we-rest":  { data: WE_REST,  title: "Weekend · Rest Day",     suffix: "Weekend (Sat\u2013Sun) \u00b7 High Day macros", totals: { cal: "2,388", p: "201g", f: "45g", c: "276g" }, flex: false }
+};
+
+
+
+let EYEBROW_SUFFIX = '';
+
+// ---------- Auto week countdown ----------
+// Show date anchor — change this one line if the date shifts.
+const SHOW_DATE = new Date(2026, 10, 14); // Nov 14, 2026
+
+function weeksOut() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msPerDay = 86400000;
+  const daysLeft = Math.round((SHOW_DATE - today) / msPerDay);
+  if (daysLeft <= 0) return null;
+  return Math.ceil(daysLeft / 7);
+}
+
+function renderEyebrow() {
+  const el = document.getElementById('eyebrow');
+  if (!el) return;
+  const w = weeksOut();
+  let prefix;
+  if (w === null) {
+    prefix = 'Show day';
+  } else if (w === 1) {
+    prefix = 'Peak week';
+  } else {
+    prefix = w + ' weeks out';
+  }
+  el.textContent = prefix + ' \u00b7 ' + EYEBROW_SUFFIX;
+}
+renderEyebrow();
+
+
+// ---------- Layered storage: survives aggressive iOS eviction where possible ----------
+const Store = (() => {
+  const mem = {};           // always-available in-session layer
+  let idb = null;
+
+  // open IndexedDB (more durable than localStorage on iOS in some contexts)
+  try {
+    const req = indexedDB.open('prepProtocol', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+    };
+    req.onsuccess = e => {
+      idb = e.target.result;
+      hydrateFromIDB();
+    };
+  } catch (e) {}
+
+  function idbSet(k, v) {
+    if (!idb) return;
+    try { idb.transaction('kv', 'readwrite').objectStore('kv').put(v, k); } catch (e) {}
+  }
+
+  function hydrateFromIDB() {
+    if (!idb) return;
+    try {
+      const store = idb.transaction('kv', 'readonly').objectStore('kv');
+      const req = store.getAllKeys();
+      req.onsuccess = () => {
+        const keys = req.result || [];
+        let pending = keys.length;
+        if (!pending) return;
+        keys.forEach(k => {
+          const g = store.get(k);
+          g.onsuccess = () => {
+            // only fill gaps — never clobber a fresher in-session value
+            if (mem[k] === undefined && g.result !== undefined) {
+              mem[k] = g.result;
+              try { localStorage.setItem(k, g.result); } catch (e) {}
+            }
+            if (--pending === 0 && typeof onStoreReady === 'function') onStoreReady();
+          };
+        });
+      };
+    } catch (e) {}
+  }
+
+  return {
+    get(k) {
+      if (mem[k] !== undefined) return mem[k];
+      try {
+        const v = localStorage.getItem(k);
+        if (v !== null) { mem[k] = v; return v; }
+      } catch (e) {}
+      try {
+        const v = sessionStorage.getItem(k);
+        if (v !== null) { mem[k] = v; return v; }
+      } catch (e) {}
+      return null;
+    },
+    set(k, v) {
+      mem[k] = v;
+      try { localStorage.setItem(k, v); } catch (e) {}
+      try { sessionStorage.setItem(k, v); } catch (e) {}
+      idbSet(k, v);
+    },
+    allKeys() {
+      const keys = new Set(Object.keys(mem));
+      try { for (let i = 0; i < localStorage.length; i++) keys.add(localStorage.key(i)); } catch (e) {}
+      return [...keys].filter(k => k.startsWith('prep-protocol'));
+    },
+    exportAll() {
+      const out = {};
+      this.allKeys().forEach(k => { const v = this.get(k); if (v !== null) out[k] = v; });
+      return out;
+    },
+    importAll(obj) {
+      Object.keys(obj).forEach(k => this.set(k, obj[k]));
+    }
+  };
+})();
+
+function onStoreReady() {
+  // IndexedDB finished hydrating after first paint — re-render if we had nothing
+  if (typeof currentView !== 'undefined' && VIEWS[currentView]) {
+    loadOverrides();
+    render(current);
+  }
+}
+
+const VIEW_KEY = 'prep-protocol-last-view';
+const CHECKED_KEY = 'prep-protocol-weekday-checklist';
+const STORAGE_KEY = 'prep-protocol-weekday-amounts';
+let currentView = 'wd-train';
+let current = VIEWS[currentView].data;
+const timelineEl = document.getElementById('timeline');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+const celebrationOverlay = document.getElementById('celebrationOverlay');
+const celebrationDismiss = document.getElementById('celebrationDismiss');
+const resetBtn = document.getElementById('resetBtn');
+let totalItems = 0, checkedCount = 0, celebrated = false;
+
+const CONFETTI_COLORS = ['#00d4ff', '#0ea5a5', '#22c55e', '#f59e0b', '#e8ecf1'];
+
+function launchConfetti() {
+  const count = 60;
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    piece.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+    piece.style.animationDelay = (Math.random() * 0.4) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 4000);
+  }
+}
+
+function showCelebration() {
+  celebrationOverlay.classList.add('show');
+  launchConfetti();
+}
+
+function hideCelebration() {
+  celebrationOverlay.classList.remove('show');
+}
+
+celebrationDismiss.addEventListener('click', hideCelebration);
+
+resetBtn.addEventListener('click', () => {
+  hideCelebration();
+  const dayType = currentView;
+  saveChecked(dayType, {});
+  render(current);
+});
+
+function updateProgressUI() {
+  const pct = totalItems ? Math.round((checkedCount / totalItems) * 100) : 0;
+  progressFill.style.width = pct + '%';
+  progressLabel.textContent = checkedCount + ' / ' + totalItems;
+
+  const sFill = document.getElementById('stickyFill');
+  const sLabel = document.getElementById('stickyLabel');
+  if (sFill && sLabel) {
+    const done = (totalItems > 0 && checkedCount === totalItems);
+    sFill.style.width = pct + '%';
+    sFill.classList.toggle('complete', done);
+    sLabel.classList.toggle('complete', done);
+    sLabel.textContent = done ? 'Complete' : (pct + '% · ' + checkedCount + '/' + totalItems);
+  }
+}
+
+function updateProgress() {
+  updateProgressUI();
+  if (totalItems > 0 && checkedCount === totalItems && !celebrated) {
+    celebrated = true;
+    showCelebration();
+  } else if (checkedCount < totalItems) {
+    celebrated = false;
+  }
+}
+
+function loadChecked(dayType) {
+  try {
+    const saved = Store.get(CHECKED_KEY + ':' + dayType);
+    return saved ? JSON.parse(saved) : {};
+  } catch (e) { return {}; }
+}
+
+function saveChecked(dayType, map) {
+  try {
+    Store.set(CHECKED_KEY + ':' + dayType, JSON.stringify(map));
+    markDirty();
+  } catch (e) { console.error('Could not save checklist state:', e); }
+}
+
+
+// ---------- Remaining supplements panel ----------
+function parseBlockStart(timeStr) {
+  // Pull the first clock time out of strings like "8:30 - 9:00 PM", "3:00 PM", "11 AM - 7 PM (varies)"
+  const m = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(?:[–-]\s*\d{1,2}(?::\d{2})?\s*)?(AM|PM)/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  const mer = m[3].toUpperCase();
+  if (mer === 'PM' && h !== 12) h += 12;
+  if (mer === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+function renderSuppPanel(data) {
+  const listEl = document.getElementById('suppList');
+  const countEl = document.getElementById('suppCount');
+  const noteEl = document.getElementById('suppNote');
+  if (!listEl) return;
+
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+
+  const rows = [];
+  let totalSupps = 0;
+
+  data.forEach((block, bIdx) => {
+    const startMins = parseBlockStart(block.time);
+    block.items.forEach((item, iIdx) => {
+      if (item.tag !== 'Supplement') return;
+      totalSupps++;
+      const el = timelineEl.querySelector('[data-row="' + bIdx + ':' + iIdx + '"]');
+      const done = el && el.classList.contains('checked');
+      if (done) return;
+      rows.push({
+        name: item.title,
+        time: block.time,
+        overdue: (startMins !== null && nowMins > startMins)
+      });
+    });
+  });
+
+  countEl.textContent = rows.length + ' of ' + totalSupps + ' left';
+
+  if (rows.length === 0) {
+    listEl.innerHTML = '<div class="supp-empty">All supplements taken.</div>';
+    noteEl.textContent = '';
+    return;
+  }
+
+  listEl.innerHTML = rows.map(r =>
+    '<div class="supp-row' + (r.overdue ? ' overdue' : '') + '">' +
+      '<span class="supp-name">' + r.name + '</span>' +
+      '<span class="supp-time">' + r.time + '</span>' +
+    '</div>'
+  ).join('');
+
+  const overdueCount = rows.filter(r => r.overdue).length;
+  noteEl.textContent = overdueCount > 0
+    ? overdueCount + ' past its scheduled time (shown in amber).'
+    : 'All still on schedule.';
+}
+
+function render(data) {
+  timelineEl.innerHTML = '';
+  totalItems = 0; checkedCount = 0; celebrated = false;
+  const dayType = currentView;
+  const checkedMap = loadChecked(dayType);
+  data.forEach((block, bIdx) => {
+    totalItems += block.items.length;
+    const blockEl = document.createElement('div');
+    blockEl.className = 'block';
+    const card = document.createElement('div');
+    card.className = 'card';
+    const head = document.createElement('div');
+    head.className = 'card-head';
+    head.innerHTML = `
+      <div class="head-left">
+        <div class="block-title">${block.title}</div>
+      </div>
+      <div class="head-right">
+        <div class="time">${block.time}</div>
+        <div class="section-toggle" data-section="${bIdx}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span class="toggle-label">All</span>
+        </div>
+      </div>`;
+    card.appendChild(head);
+    const itemsWrap = document.createElement('div');
+    itemsWrap.className = 'items';
+    block.items.forEach((item, iIdx) => {
+      const row = document.createElement('div');
+      row.className = 'item';
+      const dayType = currentView;
+      const titleHtml = item.title.replace(/^(\d+(?:\.\d+)?)(g\b|mg\b)?/, (m, num, unit) => {
+        const key = amtKey(dayType, bIdx, iIdx);
+        const val = (overrides[key] !== undefined) ? overrides[key] : num;
+        return '<span class="amt" data-key="' + key + '" contenteditable="' + (editing ? 'true' : 'false') + '">' + val + '</span>' + (unit || '');
+      });
+      row.innerHTML = `
+        <div class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        <div class="item-text">
+          <div class="item-title">${titleHtml}</div>
+          ${item.tag ? `<div class="item-tag ${item.tagClass || ''}">${item.tag}</div>` : ''}
+          ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+        </div>`;
+
+      const amtEl = row.querySelector('.amt');
+      if (amtEl) {
+        amtEl.addEventListener('click', (e) => { if (editing) e.stopPropagation(); });
+        amtEl.addEventListener('blur', () => {
+          const clean = amtEl.textContent.trim().replace(/[^0-9.]/g, '');
+          amtEl.textContent = clean || '0';
+          overrides[amtEl.dataset.key] = amtEl.textContent;
+          saveOverrides();
+        });
+        amtEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); amtEl.blur(); }
+        });
+      }
+      const rowKey = bIdx + ':' + iIdx;
+      row.dataset.row = rowKey;
+      if (checkedMap[rowKey]) {
+        row.classList.add('checked');
+        checkedCount += 1;
+      }
+
+      row.addEventListener('click', () => {
+        if (editing) return;
+        row.classList.toggle('checked');
+        const isChecked = row.classList.contains('checked');
+        checkedCount += isChecked ? 1 : -1;
+        if (isChecked) { checkedMap[rowKey] = true; } else { delete checkedMap[rowKey]; }
+        saveChecked(dayType, checkedMap);
+        updateProgress();
+        const allChecked = [...itemsWrap.children].every(el => el.classList.contains('checked'));
+        blockEl.classList.toggle('all-checked', allChecked);
+        const tl = head.querySelector('.toggle-label');
+        if (tl) tl.textContent = allChecked ? 'Done' : 'All';
+        renderSuppPanel(data);
+      });
+      itemsWrap.appendChild(row);
+    });
+    card.appendChild(itemsWrap);
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    blockEl.appendChild(dot);
+    blockEl.appendChild(card);
+    timelineEl.appendChild(blockEl);
+    const allCheckedRestored = [...itemsWrap.children].every(el => el.classList.contains('checked'));
+    blockEl.classList.toggle('all-checked', allCheckedRestored);
+
+    const sectionToggle = head.querySelector('.section-toggle');
+    const toggleLabel = sectionToggle.querySelector('.toggle-label');
+
+    function syncToggleLabel() {
+      const rows = [...itemsWrap.children];
+      const allOn = rows.every(el => el.classList.contains('checked'));
+      toggleLabel.textContent = allOn ? 'Done' : 'All';
+      blockEl.classList.toggle('all-checked', allOn);
+    }
+    syncToggleLabel();
+
+    sectionToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (editing) return;
+      const rows = [...itemsWrap.children];
+      const turnOn = !rows.every(el => el.classList.contains('checked'));
+      rows.forEach(el => {
+        const wasChecked = el.classList.contains('checked');
+        if (turnOn === wasChecked) return;
+        el.classList.toggle('checked', turnOn);
+        checkedCount += turnOn ? 1 : -1;
+        const k = el.dataset.row;
+        if (turnOn) { checkedMap[k] = true; } else { delete checkedMap[k]; }
+      });
+      saveChecked(dayType, checkedMap);
+      syncToggleLabel();
+      updateProgress();
+      renderSuppPanel(data);
+    });
+  });
+  const rail = document.createElement('div');
+  rail.className = 'rail';
+  timelineEl.prepend(rail);
+  updateProgressUI();
+  celebrated = (totalItems > 0 && checkedCount === totalItems);
+  renderSuppPanel(data);
+}
+
+
+// ---------- Editable amounts (persisted) ----------
+const editBtn = document.getElementById('editBtn');
+let editing = false;
+let overrides = {};
+
+function amtKey(dayType, blockIdx, itemIdx) {
+  return dayType + ':' + blockIdx + ':' + itemIdx;
+}
+
+function loadOverrides() {
+  try {
+    const saved = Store.get(STORAGE_KEY);
+    if (saved) overrides = JSON.parse(saved);
+  } catch (e) {
+    overrides = {};
+  }
+}
+
+function saveOverrides() {
+  try {
+    Store.set(STORAGE_KEY, JSON.stringify(overrides));
+    markDirty();
+  } catch (e) {
+    console.error('Could not save amounts:', e);
+  }
+}
+
+editBtn.addEventListener('click', () => {
+  editing = !editing;
+  document.body.classList.toggle('editing', editing);
+  editBtn.classList.toggle('active', editing);
+  editBtn.lastChild.textContent = editing ? ' Done editing' : ' Edit amounts';
+  document.querySelectorAll('.amt').forEach(el => {
+    el.contentEditable = editing ? 'true' : 'false';
+  });
+});
+
+
+function switchView(viewKey) {
+  currentView = viewKey;
+  const v = VIEWS[viewKey];
+  current = v.data;
+
+  document.getElementById('pageTitle').textContent = v.title;
+  document.getElementById('tCal').textContent = v.totals.cal + ' cal';
+  document.getElementById('tP').textContent = v.totals.p;
+  document.getElementById('tF').textContent = v.totals.f;
+  document.getElementById('tC').textContent = v.totals.c;
+  document.getElementById('flexBanner').style.display = v.flex ? 'block' : 'none';
+
+  EYEBROW_SUFFIX = v.suffix;
+  renderEyebrow();
+  hideCelebration();
+  render(current);
+
+  try { Store.set(VIEW_KEY, viewKey); } catch (e) {}
+}
+
+document.querySelectorAll('[data-view-btn]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-view-btn]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    switchView(btn.dataset.viewBtn);
+  });
+});
+
+
+// ---------- Backup / restore ----------
+const backupBtn = document.getElementById('backupBtn');
+const backupPanel = document.getElementById('backupPanel');
+const backupBox = document.getElementById('backupBox');
+const backupMsg = document.getElementById('backupMsg');
+
+function markDirty() {
+  if (backupBtn) backupBtn.classList.add('dirty');
+}
+
+function refreshBackupCode() {
+  try {
+    backupBox.value = btoa(unescape(encodeURIComponent(JSON.stringify(Store.exportAll()))));
+  } catch (e) {
+    backupBox.value = JSON.stringify(Store.exportAll());
+  }
+}
+
+backupBtn.addEventListener('click', () => {
+  const open = backupPanel.classList.toggle('open');
+  if (open) { refreshBackupCode(); backupMsg.textContent = ''; }
+});
+
+document.getElementById('copyBackup').addEventListener('click', () => {
+  refreshBackupCode();
+  backupBox.removeAttribute('readonly');
+  backupBox.select();
+  backupBox.setSelectionRange(0, 999999);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(backupBox.value).then(() => {
+      backupMsg.textContent = 'Copied — paste it into a note.';
+    }).catch(() => {
+      backupMsg.textContent = ok ? 'Copied — paste it into a note.' : 'Select the text above and copy manually.';
+    });
+  } else {
+    backupMsg.textContent = ok ? 'Copied — paste it into a note.' : 'Select the text above and copy manually.';
+  }
+  backupBox.setAttribute('readonly', '');
+  backupBtn.classList.remove('dirty');
+});
+
+document.getElementById('restoreBackup').addEventListener('click', () => {
+  backupBox.removeAttribute('readonly');
+  const raw = backupBox.value.trim();
+  if (!raw) { backupMsg.textContent = 'Paste your code into the box first.'; backupBox.setAttribute('readonly',''); return; }
+  let obj = null;
+  try {
+    obj = JSON.parse(decodeURIComponent(escape(atob(raw))));
+  } catch (e) {
+    try { obj = JSON.parse(raw); } catch (e2) { obj = null; }
+  }
+  if (!obj || typeof obj !== 'object') {
+    backupMsg.textContent = 'That code could not be read. Check it copied fully.';
+    backupBox.setAttribute('readonly','');
+    return;
+  }
+  Store.importAll(obj);
+  loadOverrides();
+  const savedView = Store.get(VIEW_KEY);
+  const target = (savedView && VIEWS[savedView]) ? savedView : currentView;
+  document.querySelectorAll('[data-view-btn]').forEach(b => {
+    b.classList.toggle('active', b.dataset.viewBtn === target);
+  });
+  switchView(target);
+  backupMsg.textContent = 'Restored.';
+  backupBtn.classList.remove('dirty');
+  backupBox.setAttribute('readonly','');
+});
+
+loadOverrides();
+
+// restore last-used tab
+try {
+  const savedView = Store.get(VIEW_KEY);
+  if (savedView && VIEWS[savedView]) {
+    document.querySelectorAll('[data-view-btn]').forEach(b => {
+      b.classList.toggle('active', b.dataset.viewBtn === savedView);
+    });
+    switchView(savedView);
+  } else {
+    switchView('wd-train');
+  }
+} catch (e) {
+  switchView('wd-train');
+}
+</script>
+</body>
+</html>
